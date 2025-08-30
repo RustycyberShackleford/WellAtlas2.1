@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Sites Map</h2>
+<div id="map" style="height: 72vh; border: 1px solid #ccc; border-radius: 6px;"></div>
+<div id="nearby" style="margin-top:10px;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Prefer MapTiler Satellite (demo key baked); fallback to OSM if it fails
+  const key = "{{ maptiler_key }}";
+  var map = L.map('map').setView([39.73, -121.84], 9);
+  let layer;
+  try {
+    layer = L.tileLayer('https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=' + key, {
+      maxZoom: 19,
+      attribution: '&copy; MapTiler & OpenStreetMap contributors'
+    });
+    layer.addTo(map);
+  } catch (e) {
+    layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+  }
+
+  const sites = {{ sites|tojson }};
+  let markers = [];
+  sites.forEach(s => {
+    const m = L.marker([s.lat, s.lng]).addTo(map).bindPopup(`<b>${s.name}</b><br/>Customer: ${s.customer}`);
+    markers.push({ marker: m, site: s });
+  });
+
+  // Near me button
+  const locate = L.control({position: 'topleft'});
+  locate.onAdd = function() {
+    const btn = L.DomUtil.create('button','near-btn');
+    btn.title = "Find sites near me";
+    btn.innerHTML = "Near Me";
+    btn.style.background = "#0066cc";
+    btn.style.color = "white";
+    btn.style.border = "none";
+    btn.style.padding = "6px 10px";
+    btn.style.margin = "6px";
+    btn.style.borderRadius = "4px";
+    btn.style.cursor = "pointer";
+    btn.onclick = function() {
+      if (!navigator.geolocation) { alert("Geolocation not supported"); return; }
+      navigator.geolocation.getCurrentPosition(gotPos, err => alert("Location error"));
+    };
+    return btn;
+  };
+  locate.addTo(map);
+
+  function toRad(d){ return d * Math.PI/180; }
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = toRad(lat2-lat1);
+    const dLon = toRad(lon2-lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R*c;
+  }
+
+  function gotPos(pos){
+    const myLat = pos.coords.latitude;
+    const myLng = pos.coords.longitude;
+    L.circle([myLat,myLng], {radius: 15000}).addTo(map);
+    map.setView([myLat,myLng], 11);
+    let nearby = [];
+    markers.forEach(obj => {
+      const d = haversine(myLat,myLng,obj.site.lat,obj.site.lng);
+      if (d <= 25) {
+        obj.marker.openPopup();
+        nearby.push({name: obj.site.name, customer: obj.site.customer, dist: d.toFixed(1)});
+      }
+    });
+    const wrap = document.getElementById('nearby');
+    if (nearby.length === 0) {
+      wrap.innerHTML = "<p>No sites within 25 km.</p>";
+    } else {
+      let html = "<h3>Nearby Sites (within ~25 km)</h3><ul>";
+      nearby.sort((a,b)=>a.dist-b.dist).forEach(n => {
+        html += `<li>${n.name} — ${n.customer} (${n.dist} km)</li>`;
+      });
+      html += "</ul>";
+      wrap.innerHTML = html;
+    }
+  }
+</script>
+{% endblock %}
