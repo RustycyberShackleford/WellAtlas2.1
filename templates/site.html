@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Site: {{ site.name }}</h2>
+<p class="muted">Customer: <a href="{{ url_for('customer_detail', cid=site.customer.id) }}">{{ site.customer.name }}</a></p>
+<p>Lat/Lng: {{ site.latitude }}, {{ site.longitude }}</p>
+
+<h3 id="jobs">Jobs</h3>
+<a class="btn" href="{{ url_for('new_job') }}?site_id={{ site.id }}">+ New Job</a>
+<ul class="list">
+  {% for j in jobs %}
+    <li>
+      <a href="{{ url_for('job_detail', jid=j.id) }}">{{ j.job_number }}</a>
+      <span class="muted">({{ j.category }} · {{ j.status }})</span>
+      <form method="post" action="{{ url_for('delete_job', jid=j.id) }}" style="display:inline" onsubmit="return confirm('Delete this job?')">
+        <button class="link danger">Delete</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

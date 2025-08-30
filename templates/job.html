@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Job: {{ job.job_number }}</h2>
+<p class="muted">Category: {{ job.category }} · Status: {{ job.status }}</p>
+<p>Site: <a href="{{ url_for('site_detail', sid=job.site.id) }}">{{ job.site.name }}</a></p>
+
+<h3>Timeline</h3>
+<form method="post" action="{{ url_for('add_entry', jid=job.id) }}" class="form row">
+  <div style="flex:2">
+    <label>Text</label>
+    <input name="text" placeholder="What happened?" required>
+  </div>
+  <div>
+    <label>Date/Time (optional)</label>
+    <input name="when" type="datetime-local">
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <button class="btn">Add Entry</button>
+  </div>
+</form>
+
+<ul class="timeline">
+  {% for e in entries %}
+    <li><strong>{{ e.when.strftime('%Y-%m-%d %H:%M') }}</strong> — {{ e.text }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

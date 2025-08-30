@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>New Job</h2>
+<form method="post" action="{{ url_for('create_job') }}" class="form">
+  <label>Site</label>
+  <select name="site_id" required>
+    {% for s in sites %}
+      <option value="{{ s.id }}" {% if selected_site==s.id %}selected{% endif %}>{{ s.name }} — {{ s.customer.name }}</option>
+    {% endfor %}
+  </select>
+  <label>Job Number</label>
+  <input name="job_number" required placeholder="e.g. CHI-22-AG1">
+  <label>Category</label>
+  <select name="category" required>
+    {% for c in categories %}
+      <option value="{{ c }}">{{ c }}</option>
+    {% endfor %}
+  </select>
+  <label>Status</label>
+  <input name="status" placeholder="Open">
+  <button class="btn">Create</button>
+</form>
+{% endblock %}

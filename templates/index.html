@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Sites Map</h2>
+{% if not MAPTILER_KEY %}
+  <div class="warn">No MAPTILER_KEY set. Add it in Render → Environment to enable satellite tiles. Using OSM fallback.</div>
+{% endif %}
+<div class="toolbar">
+  <button id="nearMe">Find Sites Near Me</button>
+  <span id="nearMeStatus" class="muted"></span>
+</div>
+<div id="map" style="height: 70vh; border: 1px solid #2a3f6e; border-radius: 8px;"></div>
+<div id="nearResults" class="near-list" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  var map = L.map('map').setView([39.73, -121.99], 9);
+
+  {% if MAPTILER_KEY %}
+  const base = L.tileLayer(
+    "https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key={{ MAPTILER_KEY }}",
+    { tileSize: 512, zoomOffset: -1, maxZoom: 20,
+      attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>' }
+  ).addTo(map);
+  {% else %}
+  const base = L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
+  ).addTo(map);
+  {% endif %}
+
+  const sites = {{ sites|tojson }};
+
+  sites.forEach(s => {
+    const html = `
+      <div><b>${s.customer}</b><br>${s.name}</div>
+      <div style="margin-top:6px">
+        <a class="btn" href="/sites/${s.id}">View Site</a>
+        <a class="btn" href="/sites/${s.id}#jobs">View Jobs</a>
+      </div>`;
+    L.marker([s.lat, s.lng]).addTo(map).bindPopup(html);
+  });
+
+  function haversine(lat1, lon1, lat2, lon2){
+    const toRad = d => d * Math.PI/180;
+    const R = 6371; // km
+    const dLat = toRad(lat2-lat1);
+    const dLon = toRad(lon2-lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  }
+
+  document.getElementById("nearMe").onclick = () => {
+    const status = document.getElementById("nearMeStatus");
+    const list = document.getElementById("nearResults");
+    status.textContent = "Locating…";
+    list.style.display = "none";
+    if (!navigator.geolocation){
+      status.textContent = "Geolocation not supported.";
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const {latitude, longitude} = pos.coords;
+        status.textContent = `You: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        // compute distances
+        const ranked = sites.map(s => ({
+          ...s, km: haversine(latitude, longitude, s.lat, s.lng)
+        })).sort((a,b) => a.km - b.km).slice(0, 15);
+        let html = "<h3>Nearest sites</h3><ol>";
+        ranked.forEach(r => {
+          html += `<li>${r.customer} — <a href="/sites/${r.id}">${r.name}</a> <span class="muted">(${r.km.toFixed(1)} km)</span></li>`;
+        });
+        html += "</ol>";
+        list.innerHTML = html;
+        list.style.display = "block";
+      },
+      (err) => {
+        status.textContent = "Location permission denied.";
+      },
+      {enableHighAccuracy:true, timeout:8000}
+    );
+  };
+</script>
+{% endblock %}

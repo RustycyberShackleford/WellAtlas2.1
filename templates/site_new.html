@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>New Site</h2>
+<form method="post" action="{{ url_for('create_site') }}" class="form">
+  <label>Customer</label>
+  <select name="customer_id" required>
+    {% for c in customers %}
+      <option value="{{ c.id }}" {% if selected_customer==c.id %}selected{% endif %}>{{ c.name }}</option>
+    {% endfor %}
+  </select>
+  <label>Site Name</label>
+  <input name="name" required placeholder="e.g. Chico Site 12">
+  <div class="row">
+    <div>
+      <label>Latitude</label>
+      <input name="latitude" required step="0.000001" placeholder="39.7285">
+    </div>
+    <div>
+      <label>Longitude</label>
+      <input name="longitude" required step="0.000001" placeholder="-121.8375">
+    </div>
+  </div>
+  <button class="btn">Create</button>
+</form>
+{% endblock %}
