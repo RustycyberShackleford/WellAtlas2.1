@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Sites Map</h2>
+<div id="map" style="height:500px;"></div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script>
+  var map = L.map('map').setView([39.73, -121.84], 9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+  }).addTo(map);
+  var sites = {{ sites|tojson }};
+  sites.forEach(s => {
+      L.marker([s.latitude, s.longitude]).addTo(map)
+       .bindPopup(s.name);
+  });
+</script>
+{% endblock %}
