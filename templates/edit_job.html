@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Edit Job — WellAtlas 2.1{% endblock %}
+{% block content %}
+<div class="card"><h2>Edit Job {{ job.job_number }}</h2>
+<form method="post">
+  <label>Job Number</label><input name="job_number" value="{{ job.job_number }}" required>
+  <label>Category</label>
+  <select name="category" required>
+    {% for opt in ["Domestic","Ag","Drilling","Electrical"] %}
+      <option value="{{ opt }}" {% if job.category==opt %}selected{% endif %}>{{ opt }}</option>
+    {% endfor %}
+  </select>
+  <label>Status</label><input name="status" value="{{ job.status }}" required>
+  <button>Save</button>
+</form>
+</div>
+{% endblock %}

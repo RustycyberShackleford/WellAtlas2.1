@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}New Site — WellAtlas 2.1{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+{% endblock %}
+{% block content %}
+<div class="card"><h2>New Site for {{ customer.name }}</h2>
+<form method="post">
+  <label>Site Name</label><input name="name" required>
+  <label>Latitude (optional)</label><input name="latitude" id="lat" placeholder="e.g. 37.7749">
+  <label>Longitude (optional)</label><input name="longitude" id="lng" placeholder="-122.4194">
+  <button>Create</button>
+</form>
+<div id="map" class="map"></div>
+<p class="small">Drag the marker or click the map to set coordinates.</p>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const hasKey = {{ 'true' if maptile_key else 'false' }};
+    const key = "{{ maptile_key or '' }}";
+    const map = L.map('map').setView([37.5,-120], 6);
+    if (hasKey) {
+      L.tileLayer('https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=' + key, {
+        maxZoom: 20,
+        attribution: '&copy; MapTiler &copy; OpenStreetMap'
+      }).addTo(map);
+    } else {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+    }
+    let m = L.marker([37.5,-120], {draggable:true}).addTo(map);
+    function updateInputs(latlng){
+      document.getElementById('lat').value = latlng.lat.toFixed(6);
+      document.getElementById('lng').value = latlng.lng.toFixed(6);
+    }
+    m.on('dragend', e => updateInputs(m.getLatLng()));
+    map.on('click', e => { m.setLatLng(e.latlng); updateInputs(e.latlng); });
+  </script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Site — WellAtlas 2.1{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="card">
+    <h2>{{ site.name }}</h2>
+    <p class="small">Lat: {{ site.latitude }} &nbsp; Lng: {{ site.longitude }}</p>
+    <p><a href="{{ url_for('new_job', site_id=site.id) }}"><button>+ New Job</button></a></p>
+
+    <form method="get" action="{{ url_for('site_detail', site_id=site.id) }}">
+      <label>Filter by Category</label>
+      <select name="category">
+        <option value="">All</option>
+        {% for opt in ["Domestic","Ag","Drilling","Electrical"] %}
+          <option value="{{ opt }}" {% if selected_category==opt %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
+      </select>
+      <button>Filter</button>
+    </form>
+
+    <table>
+      <thead><tr><th>Job #</th><th>Category</th><th>Status</th><th>Updated</th><th class="actions">Actions</th></tr></thead>
+      <tbody>
+      {% for j in jobs %}
+        <tr>
+          <td><a href="{{ url_for('job_detail', job_id=j.id) }}">{{ j.job_number }}</a></td>
+          <td>{{ j.category }}</td>
+          <td>{{ j.status }}</td>
+          <td>{{ j.updated_at.strftime("%Y-%m-%d") if j.updated_at else "" }}</td>
+          <td class="actions">
+            <a href="{{ url_for('edit_job', job_id=j.id) }}">Edit</a>
+            <a href="{{ url_for('delete_job', job_id=j.id) }}" onclick="return confirm('Delete job?')">Delete</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Map</h3>
+    <div id="map" class="map"></div>
+    <p class="small">Drag the marker to adjust. Click "Save" to store coordinates.</p>
+    <form method="post" action="{{ url_for('save_site_coords', site_id=site.id) }}">
+      <input type="hidden" name="latitude" id="lat" value="{{ site.latitude or '' }}">
+      <input type="hidden" name="longitude" id="lng" value="{{ site.longitude or '' }}">
+      <button>Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const hasKey = {{ 'true' if maptile_key else 'false' }};
+    const key = "{{ maptile_key or '' }}";
+    const lat = {{ site.latitude or 37.5 }};
+    const lng = {{ site.longitude or -120.0 }};
+    const map = L.map('map').setView([lat, lng], 8);
+
+    if (hasKey) {
+      L.tileLayer('https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=' + key, {
+        maxZoom: 20,
+        attribution: '&copy; MapTiler &copy; OpenStreetMap'
+      }).addTo(map);
+    } else {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+    }
+
+    const marker = L.marker([lat, lng], {draggable:true}).addTo(map);
+    marker.on('dragend', function(e){
+      const p = marker.getLatLng();
+      document.getElementById('lat').value = p.lat.toFixed(6);
+      document.getElementById('lng').value = p.lng.toFixed(6);
+    });
+  </script>
+{% endblock %}

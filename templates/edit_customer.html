@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Edit Customer — WellAtlas 2.1{% endblock %}
+{% block content %}
+<div class="card"><h2>Edit Customer</h2>
+<form method="post">
+  <label>Name</label><input name="name" value="{{ customer.name }}" required>
+  <button>Save</button>
+</form>
+</div>
+{% endblock %}

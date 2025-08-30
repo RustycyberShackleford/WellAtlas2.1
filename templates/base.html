@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}WellAtlas 2.1{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <div class="logo"><a href="{{ url_for('index') }}">WellAtlas by Henry Suden</a></div>
+    <nav>
+      <a href="{{ url_for('index') }}">Home</a>
+      <a href="{{ url_for('customers') }}">Customers</a>
+      <a href="{{ url_for('new_customer') }}">+ New Customer</a>
+      <a href="{{ url_for('trigger_backup') }}">Backup</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+
+  <div class="footer"><small>© 2025 WellAtlas</small></div>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
